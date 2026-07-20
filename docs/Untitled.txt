@@ -1,0 +1,228 @@
+apakah valid jika hanya seperti ini benchmarking nya?
+
+package service
+
+import (
+	"strconv"
+	"sync"
+	"testing"
+	"time"
+	"unsafe"
+
+	"github.com/ballspins/environmental-data-logger/backend/internal/model"
+)
+
+// Meniru buffer pool yang digunakan repository untuk benchmark end-to-end format
+var bufPool = sync.Pool{
+	New: func() interface{} {
+		b := make([]byte, 0, 64*1024)
+		return &b
+	},
+}
+
+// unsafeString mengonversi byte slice ke string secara in-place dengan 0 alokasi heap
+func unsafeString(b []byte) string {
+	if len(b) == 0 {
+		return ""
+	}
+	return unsafe.String(&b[0], len(b))
+}
+
+func BenchmarkEndToEndProcessing(b *testing.B) {
+	parser := NewParserService()
+
+	// Buat payload tiruan (48 byte)
+	mockPayload := make([]byte, 48)
+	mockPayload[0] = 0x00
+	mockPayload[1] = 0x1B
+	mockPayload[2] = 0x56
+	mockPayload[3] = 0x65
+	mockPayload[4] = 45 // Node ID
+	mockPayload[8] = 0x70
+	mockPayload[9] = 0x17
+	mockPayload[10] = 0xF6
+	mockPayload[11] = 0x09
+
+	// Batch size: 100 chunk (setara 1000 baris data sensor)
+	batchSize := 100
+	results := make([]string, batchSize)
+	for i := 0; i < batchSize; i++ {
+		results[i] = string(mockPayload) // Dalam aplikasi nyata ini ditarik dari Redis
+	}
+
+	// Buffer rows yang digunakan worker (reusable)
+	dbRowsBuf := make([]model.SensorDataRow, 0, batchSize*10)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		// 1. Step Worker: Loop parsing biner (0 alokasi)
+		dbRowsBuf = dbRowsBuf[:0]
+		for _, rawStr := range results {
+			payloadBytes := unsafe.Slice(unsafe.StringData(rawStr), len(rawStr))
+
+			var chunk model.ChunkPayload
+			_ = parser.ParseBinary(payloadBytes, &chunk)
+
+			baseTime := time.Unix(int64(chunk.Timestamp), 0)
+			for j := 0; j < 10; j++ {
+				dp := chunk.Data[j]
+				exactTime := baseTime.Add(time.Duration(-(9-j)*2) * time.Second)
+
+				dbRowsBuf = append(dbRowsBuf, model.SensorDataRow{
+					Timestamp: exactTime,
+					NodeID:    chunk.NodeID,
+					Temp:      float32(dp.Temp) / 100.0,
+					Humi:      float32(dp.Humi) / 100.0,
+				})
+			}
+		}
+
+		// 2. Step Repository: Bulk Query Formatting (0 alokasi)
+		bufPtr := bufPool.Get().(*[]byte)
+		buf := (*bufPtr)[:0]
+
+		buf = append(buf, "INSERT INTO sensor_logs (time, node_id, temperature, humidity) VALUES "...)
+
+		for idx, dp := range dbRowsBuf {
+			buf = append(buf, '(')
+			buf = append(buf, '\'')
+			buf = dp.Timestamp.AppendFormat(buf, "2006-01-02 15:04:05")
+			buf = append(buf, '\'', ',', ' ')
+			buf = strconv.AppendUint(buf, uint64(dp.NodeID), 10)
+			buf = append(buf, ',', ' ')
+			buf = strconv.AppendFloat(buf, float64(dp.Temp), 'f', 2, 32)
+			buf = append(buf, ',', ' ')
+			buf = strconv.AppendFloat(buf, float64(dp.Humi), 'f', 2, 32)
+			buf = append(buf, ')')
+
+			if idx < len(dbRowsBuf)-1 {
+				buf = append(buf, ',', ' ')
+			}
+		}
+
+		// Simulasi string query yang dihasilkan tanpa alokasi heap
+		_ = unsafeString(buf)
+
+		// Kembalikan ke pool
+		*bufPtr = buf
+		bufPool.Put(bufPtr)
+	}
+}
+
+apakah valid jika hanya seperti ini benchmarking nya?
+
+package service
+
+import (
+	"strconv"
+	"sync"
+	"testing"
+	"time"
+	"unsafe"
+
+	"github.com/ballspins/environmental-data-logger/backend/internal/model"
+)
+
+// Meniru buffer pool yang digunakan repository untuk benchmark end-to-end format
+var bufPool = sync.Pool{
+	New: func() interface{} {
+		b := make([]byte, 0, 64*1024)
+		return &b
+	},
+}
+
+// unsafeString mengonversi byte slice ke string secara in-place dengan 0 alokasi heap
+func unsafeString(b []byte) string {
+	if len(b) == 0 {
+		return ""
+	}
+	return unsafe.String(&b[0], len(b))
+}
+
+func BenchmarkEndToEndProcessing(b *testing.B) {
+	parser := NewParserService()
+
+	// Buat payload tiruan (48 byte)
+	mockPayload := make([]byte, 48)
+	mockPayload[0] = 0x00
+	mockPayload[1] = 0x1B
+	mockPayload[2] = 0x56
+	mockPayload[3] = 0x65
+	mockPayload[4] = 45 // Node ID
+	mockPayload[8] = 0x70
+	mockPayload[9] = 0x17
+	mockPayload[10] = 0xF6
+	mockPayload[11] = 0x09
+
+	// Batch size: 100 chunk (setara 1000 baris data sensor)
+	batchSize := 100
+	results := make([]string, batchSize)
+	for i := 0; i < batchSize; i++ {
+		results[i] = string(mockPayload) // Dalam aplikasi nyata ini ditarik dari Redis
+	}
+
+	// Buffer rows yang digunakan worker (reusable)
+	dbRowsBuf := make([]model.SensorDataRow, 0, batchSize*10)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		// 1. Step Worker: Loop parsing biner (0 alokasi)
+		dbRowsBuf = dbRowsBuf[:0]
+		for _, rawStr := range results {
+			payloadBytes := unsafe.Slice(unsafe.StringData(rawStr), len(rawStr))
+
+			var chunk model.ChunkPayload
+			_ = parser.ParseBinary(payloadBytes, &chunk)
+
+			baseTime := time.Unix(int64(chunk.Timestamp), 0)
+			for j := 0; j < 10; j++ {
+				dp := chunk.Data[j]
+				exactTime := baseTime.Add(time.Duration(-(9-j)*2) * time.Second)
+
+				dbRowsBuf = append(dbRowsBuf, model.SensorDataRow{
+					Timestamp: exactTime,
+					NodeID:    chunk.NodeID,
+					Temp:      float32(dp.Temp) / 100.0,
+					Humi:      float32(dp.Humi) / 100.0,
+				})
+			}
+		}
+
+		// 2. Step Repository: Bulk Query Formatting (0 alokasi)
+		bufPtr := bufPool.Get().(*[]byte)
+		buf := (*bufPtr)[:0]
+
+		buf = append(buf, "INSERT INTO sensor_logs (time, node_id, temperature, humidity) VALUES "...)
+
+		for idx, dp := range dbRowsBuf {
+			buf = append(buf, '(')
+			buf = append(buf, '\'')
+			buf = dp.Timestamp.AppendFormat(buf, "2006-01-02 15:04:05")
+			buf = append(buf, '\'', ',', ' ')
+			buf = strconv.AppendUint(buf, uint64(dp.NodeID), 10)
+			buf = append(buf, ',', ' ')
+			buf = strconv.AppendFloat(buf, float64(dp.Temp), 'f', 2, 32)
+			buf = append(buf, ',', ' ')
+			buf = strconv.AppendFloat(buf, float64(dp.Humi), 'f', 2, 32)
+			buf = append(buf, ')')
+
+			if idx < len(dbRowsBuf)-1 {
+				buf = append(buf, ',', ' ')
+			}
+		}
+
+		// Simulasi string query yang dihasilkan tanpa alokasi heap
+		_ = unsafeString(buf)
+
+		// Kembalikan ke pool
+		*bufPtr = buf
+		bufPool.Put(bufPtr)
+	}
+}
+
+jelaskan kenapa tidak di test dengan mqtt langsung.
+jelaskan kenapa tidak di test dengan mqtt langsung.
