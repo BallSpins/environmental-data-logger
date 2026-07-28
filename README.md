@@ -16,10 +16,12 @@ The pipeline utilizes a decoupled producer-consumer model.
 *   `backend/`: Server-side services, message queue processing, and benchmarking utilities.
 *   `firmware/`: Embedded application for data acquisition and EMA signal processing.
 *   `docs/`: Technical documentation and benchmark metrics.
+*   `reports/`: Research reports and experimental evaluations.
+*   `research-ideas/`: Preliminary research notes and future investigation topics.
 
-## Hardware Roadmap
+<!-- ## Hardware Roadmap
 *   **Current State:** Software-based device emulation via Wokwi for functional verification.
-*   **Physical Deployment (Planned):** ESP32 deployment integrating physical environmental sensors and on-board hardware components.
+*   **Physical Deployment (Planned):** ESP32 deployment integrating physical environmental sensors and on-board hardware components. -->
 
 ## License
 Refer to the [`LICENSE`](./LICENSE) file for the complete licensing terms.

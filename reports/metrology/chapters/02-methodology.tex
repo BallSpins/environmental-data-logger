@@ -1,0 +1,40 @@
+\section{Methodology}
+
+\subsection{Experimental Setup and Hardware Determinism}
+To isolate the physical characteristics of the sensor and prevent systematic measurement errors, the data acquisition (DAQ) architecture was strictly engineered for hardware-level determinism. An ESP32 microcontroller was utilized exclusively as a localized DAQ unit. To eliminate thermal coupling and extraneous Joule heating from the System-on-Chip (SoC) that could compromise microclimate readings, all radio frequency (RF) and wireless capabilities were explicitly disabled at the firmware level. 
+
+The primary sensing element, an AHT10 capacitive polymer and silicon sensor, was queried via hardware-timer interrupts executing on Core 0. This implementation achieved a highly deterministic sampling interval of $\Delta t = 2.051$\,s, with an ultra-low temporal jitter of $<0.05$\,ms. The 2-second nominal polling rate was not arbitrary; it was strategically enforced based on hardware design constraints \cite{aht10_datasheet} to restrict internal self-heating to below $0.1^\circ$C during continuous operation, a necessity given that relative humidity measurements are directly dependent on the internal thermal state of the sensor.
+
+\subsection{Protocol I: Steady-State Noise Characterization}
+To evaluate the intrinsic hardware noise floor ($\sigma$), the sensor was mechanically isolated within a thermally insulated enclosure, successfully suppressing external convective currents and ambient thermal fluctuations. The steady-state acquisition spanned approximately two hours. 
+
+An initial 30-minute segment of the dataset was explicitly trimmed. Direct inspection verified that this period represented a physical cooling transient (decaying from $30.99^\circ$C to $30.56^\circ$C), resulting from the dissipation of residual heat introduced during sensor handling and installation, rather than active chamber heating. Subsequent to this trimming, linear detrending was applied to the near-steady-state data to mathematically decouple the macroscopic environmental drift from the microscopic analog noise inherent to the hardware.
+
+\subsection{Protocol II: Transient Response and Calculus-based Cost Function}
+A secondary protocol evaluated the physical phase lag introduced during transient phenomena. Following a 3-minute baseline stabilization phase, an isolated thermal step input (warm water injection, $40^\circ\text{C}$--$50^\circ\text{C}$) was introduced into the closed system, inducing an instantaneous physical perturbation. 
+
+To condition the analog noise without severely degrading the transient response, an Exponential Moving Average (EMA) filter was implemented based on digital signal processing principles \cite{pieterp_ema}:
+\begin{equation}
+y_t = \alpha \cdot x_t + (1 - \alpha) \cdot y_{t-1} \label{eq:ema02}
+\end{equation}
+where $x_t$ represents the raw transducer measurement and $y_t$ denotes the filtered signal. The theoretical noise power ratio for zero-mean white noise passing through this filter is expressed as:
+\begin{equation}
+\frac{\sigma_y^2}{\sigma_x^2} = \frac{\alpha}{2-\alpha} \label{eq:noise_power_ratio}
+\end{equation}
+Consequently, the relative reduction in noise standard deviation ($\text{Red}_{\sigma}$) is modeled as:
+\begin{equation}
+\text{Red}_{\sigma} = \left(1 - \sqrt{\frac{\alpha}{2-\alpha}}\right) \times 100\% \label{eq:red_sigma}
+\end{equation}
+
+The optimal smoothing factor $\alpha$ was derived through numerical optimization of a calculus-based Cost Function $J(\alpha)$. This function symmetricized the Min-Max normalized penalty of empirical noise standard deviation ($\hat{C}_{\text{noise}}(\alpha)$) evaluated from Protocol I against the normalized transient phase lag ($\hat{C}_{\text{lag}}(\alpha)$) captured in Protocol II:
+\begin{equation}
+J(\alpha) = W_1 \cdot \hat{C}_{\text{noise}}(\alpha) + W_2 \cdot \hat{C}_{\text{lag}}(\alpha) \label{eq:cost_func}
+\end{equation}
+where $W_1 = 0.5$ and $W_2 = 0.5$. The empirical noise cost $\hat{C}_{\text{noise}}(\alpha)$ is defined as the feature-scaled standard deviation of the filtered detrended signal $y_t(\alpha)$:
+\begin{equation}
+\hat{C}_{\text{noise}}(\alpha) = \frac{\sigma_y(\alpha) - \min_{\alpha}(\sigma_y)}{\max_{\alpha}(\sigma_y) - \min_{\alpha}(\sigma_y)} \label{eq:norm_noise}
+\end{equation}
+where $\sigma_y(\alpha) = \text{std}(y_t(\alpha))$. Theoretically, for pure zero-mean white noise, the underlying noise power ratio follows $\frac{\sigma_y^2}{\sigma_x^2} = \frac{\alpha}{2-\alpha}$, yielding a theoretical standard deviation reduction modeled as:
+\begin{equation}
+\text{Red}_{\sigma} = \left(1 - \sqrt{\frac{\alpha}{2-\alpha}}\right) \times 100\% \label{eq:red_sigma}
+\end{equation}

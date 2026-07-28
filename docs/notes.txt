@@ -1,0 +1,2 @@
+Ketergantungan Profil Step Input:
+Nilai RMSE dan penalti lag yang Anda hitung sangat bergantung pada seberapa cepat botol air hangat menghasilkan perubahan suhu transien pada Protokol 2. Jika profil injeksi termalnya berbeda (misalnya perubahan suhu yang jauh lebih lambat atau lebih ekstrem), nilai RMSE akan bergeser. Sebutkan ini sebagai salah satu batasan eksperimental (experimental limitations).

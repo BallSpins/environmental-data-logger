@@ -1,0 +1,13 @@
+\begin{abstract}
+  Accurate microclimate environmental measurements using low-cost transducers, such as the AHT10 capacitive sensor, are frequently compromised by inherent hardware noise and thermal anomalies. 
+  This study investigates the metrological characterization of the measurement chain and the optimization of digital signal filtering utilizing the Exponential Moving Average (EMA) algorithm. 
+  To eliminate external thermal coupling (Joule heating) and cross-interference originating from the ESP32 microcontroller's integrated radio frequency (RF) module, data acquisition was strictly executed via hardware-timer deterministic sampling at a constant interval of $\Delta t = 2.051$ seconds with all wireless protocols fully disabled.
+  Steady-state characterization within an isolated chamber yielded a pure baseline noise floor with a standard deviation of $\sigma = 0.0108^\circ\text{C}$ post-linear detrending. 
+  This measured deviation exceeds the sensor's 20-bit analog-to-digital theoretical resolution ($1 \text{ LSB} \approx 0.00019^\circ\text{C}$) by a factor of 56, strongly indicating that the accuracy's lower bound is intrinsically dominated by analog front-end thermodynamic noise rather than digital quantization errors.
+
+  To objectively calibrate the physical trade-off between noise attenuation and algorithmic phase lag, a calculus-based Cost Function was modeled using balanced baseline penalty weights ($W_1 = W_2 = 0.5$). 
+  The numerical computation converged on an optimal relative smoothing factor of $\alpha = 0.1494$. Quantitative evaluation of the transient response to a thermal step input demonstrated that this parameter establishes an algorithmic time constant of $\tau \approx 12.67$ seconds, 
+  providing a theoretical white noise standard deviation reduction of $71.6\%$. 
+  Furthermore, the optimized filter effectively suppressed transient deviations, yielding a Root Mean Square Error (RMSE) of $0.0771^\circ\text{C}$ and capping the Max Lag Error at $0.1333^\circ\text{C}$. 
+  These findings demonstrate that a mathematically optimized EMA filter can robustly balance signal integrity with the sensor's physical response inertia without relying on heuristic visual approximations.
+\end{abstract}

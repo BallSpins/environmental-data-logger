@@ -1,5 +1,6 @@
 BACKEND_DIR=backend
 FIRMWARE_DIR=firmware
+REPORT_DIR=reports
 
 all: help
 
@@ -8,6 +9,9 @@ backend/%:
 
 firmware/%:
 	$(MAKE) -C $(FIRMWARE_DIR) $*
+
+report/%:
+	$(MAKE) -C $(REPORT_DIR) $*
 
 help:
 	@echo "Command List:"

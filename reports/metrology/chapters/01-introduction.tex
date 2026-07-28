@@ -1,0 +1,15 @@
+\section{Introduction}
+Accurate and reliable environmental data acquisition serves as the fundamental bedrock for modern meteorological monitoring, climatological analysis, and automated agricultural systems. 
+In remote edge-computing deployments, low-cost environmental transducers—such as the AHT10 capacitive sensor measuring temperature ($T$) and relative humidity ($RH$)—are frequently utilized due to their economic viability and compact form factor \cite{abdinoor2025lowcost, hanes2024comparison}. 
+However, raw data extracted from these low-cost hardware peripherals inherently suffer from environmental noise, transient spikes, and inherent transducer uncertainties that can severely compromise subsequent analytical modeling \cite{aht10_datasheet}.
+
+While digital filtering techniques like the Exponential Moving Average (EMA) algorithm \cite{stoyanova2025ema, blokhin2022digital}, 
+expressed in \eqref{eq:ema01}, offer a computationally efficient method to attenuate high-frequency noise, 
+they introduce a physical trade-off: an inherent time delay or phase lag in the sensor's transient response.
+\begin{equation}
+  y_t = \alpha x_t + (1-\alpha)y_{t-1}
+  \label{eq:ema01}
+\end{equation}
+Furthermore, characterizing this measurement chain requires absolute temporal stability. 
+In highly integrated System-on-Chips (SoCs) such as the ESP32, sampling interval variations ($\Delta t$) introduced by multitasking software loops or active network-stack interventions 
+can invalidate the differential equations underlying digital filters and corrupt statistical error metrics such as the Root Mean Square Error (RMSE).

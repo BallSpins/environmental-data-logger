@@ -1,0 +1,86 @@
+
+\documentclass{article}
+
+\usepackage{graphicx}
+\usepackage{cite} % Add to preamble
+
+\title{My First Paper}
+\author{Muhammad Fauzan Faturosi}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+This is the introduction.
+
+\subsection{Background}
+Some background information.
+
+\section{Methods}
+The methodology section.
+
+\textbf{Bold text}
+\textit{Italic text}
+\underline{Underlined text}
+\texttt{Monospace text}
+
+% This is a comment (not shown in output)
+
+New paragraphs need a blank line.
+
+Like this one.
+
+Inline math: $E = mc^2$
+
+Display math:
+\[
+  \int_0^\infty e^{-x^2} dx = \frac{\sqrt{\pi}}{2}
+\]
+
+Fractions: $\frac{a}{b}$
+Greek letters: $\alpha, \beta, \gamma$
+Subscripts: $x_1, x_2$
+Superscripts: $x^2, x^{10}$
+
+\begin{itemize}
+  \item First bullet point
+  \item Second bullet point
+  \item Third bullet point
+\end{itemize}
+
+\begin{enumerate}
+  \item First numbered item
+  \item Second numbered item
+  \item Third numbered item
+\end{enumerate}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{./assets/example.jpg}
+  \caption{A descriptive caption}
+  \label{fig:myfigure}
+\end{figure}
+
+Reference: Figure \ref{fig:myfigure}
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|l|c|r|}
+    \hline
+    Left & Center & Right \\
+    \hline
+    A & B & C \\
+    D & E & F \\
+    \hline
+  \end{tabular}
+  \caption{A simple table}
+  \label{tab:mytable}
+\end{table}
+
+According to Einstein \cite{einstein1905}...
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

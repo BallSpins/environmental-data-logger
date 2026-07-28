@@ -9,6 +9,6 @@ class EMAFilter {
   public:
     EMAFilter(float alphaValue);
     float update(float newValue);
-    reset();
-    setAlpha(float alphaValue);
+    // reset();
+    // setAlpha(float alphaValue);
 };
